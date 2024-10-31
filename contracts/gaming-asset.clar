@@ -98,3 +98,11 @@
     )
   )
 )
+
+;; Get asset details
+(define-read-only (get-asset-details
+  (asset-id uint)
+  (game-id (string-ascii 50))
+)
+  (map-get? assets {asset-id: asset-id, game-id: game-id})
+)
