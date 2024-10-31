@@ -58,3 +58,43 @@
     )
   )
 )
+
+;; Transfer asset ownership
+(define-public (transfer-asset
+  (asset-id uint)
+  (game-id (string-ascii 50))
+  (new-owner principal)
+  (new-price uint)
+)
+  (let
+    (
+      (asset (unwrap!
+        (map-get? assets {asset-id: asset-id, game-id: game-id})
+        ERR-ASSET-NOT-FOUND
+      ))
+    )
+    ;; Ensure only current owner can transfer
+    (asserts! (is-eq tx-sender (get owner asset)) ERR-NOT-OWNER)
+
+    ;; Calculate royalty for creator
+    (let
+      (
+        (royalty-amount (/ (* (get royalty-rate asset) new-price) u100))
+        (seller-amount (- new-price royalty-amount))
+      )
+      ;; Transfer royalty to creator
+      (try! (stx-transfer? royalty-amount tx-sender (get creator asset)))
+
+      ;; Update asset ownership and price
+      (map-set assets
+        {asset-id: asset-id, game-id: game-id}
+        (merge asset {
+          owner: new-owner,
+          price: new-price
+        })
+      )
+
+      (ok true)
+    )
+  )
+)
