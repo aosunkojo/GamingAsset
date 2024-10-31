@@ -106,3 +106,29 @@
 )
   (map-get? assets {asset-id: asset-id, game-id: game-id})
 )
+
+;; List asset for sale
+(define-public (list-asset-for-sale
+  (asset-id uint)
+  (game-id (string-ascii 50))
+  (new-price uint)
+)
+  (let
+    (
+      (asset (unwrap!
+        (map-get? assets {asset-id: asset-id, game-id: game-id})
+        ERR-ASSET-NOT-FOUND
+      ))
+    )
+    ;; Ensure only owner can list
+    (asserts! (is-eq tx-sender (get owner asset)) ERR-NOT-OWNER)
+
+    ;; Update price
+    (map-set assets
+      {asset-id: asset-id, game-id: game-id}
+      (merge asset {price: new-price})
+    )
+
+    (ok true)
+  )
+)
