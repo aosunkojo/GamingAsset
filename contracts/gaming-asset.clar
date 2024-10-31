@@ -132,3 +132,32 @@
     (ok true)
   )
 )
+
+;; Purchase asset
+(define-public (purchase-asset
+  (asset-id uint)
+  (game-id (string-ascii 50))
+)
+  (let
+    (
+      (asset (unwrap!
+        (map-get? assets {asset-id: asset-id, game-id: game-id})
+        ERR-ASSET-NOT-FOUND
+      ))
+      (current-price (get price asset))
+    )
+    ;; Check buyer has sufficient funds
+    (asserts! (>= (stx-get-balance tx-sender) current-price) ERR-INSUFFICIENT-FUNDS)
+
+    ;; Transfer payment to current owner
+    (try! (stx-transfer? current-price tx-sender (get owner asset)))
+
+    ;; Transfer asset ownership
+    (map-set assets
+      {asset-id: asset-id, game-id: game-id}
+      (merge asset {owner: tx-sender})
+    )
+
+    (ok true)
+  )
+)
